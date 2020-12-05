@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const DNS = require('../../utils/dns');
 
 const AssetSchema = new mongoose.Schema(
   {
@@ -21,9 +20,28 @@ AssetSchema.methods.show = function() {
   console.log('Asset.show:', this)
 }
 
-AssetSchema.methods.dns = function() {
-  console.log('asset.dns() called', this)
-  return DNS(this.URI)
+/**
+ * Fills asset with additional props
+ * @Params: util functions that will be run in the given order
+ */
+AssetSchema.methods.fill = function(...args) {
+  args.forEach((e) => {console.log(e)})
+}
+
+AssetSchema.methods.resolveIP = function() {
+  const dns = require('dns')
+  let lookupPromise = new Promise(((resolve, reject) => {
+    console.log('Looking up IP for ' + this.URI)
+    dns.lookup(this.URI, (err, address) => {
+      if(!err) {
+          this.IP = address
+          resolve(this)
+      } else {
+          reject('DNS lookup error: ' + err)
+      }
+  })
+  }).bind(this))
+  return lookupPromise
 }
 
 module.exports = mongoose.model('Asset', AssetSchema);
